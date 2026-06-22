@@ -1,773 +1,439 @@
-import { useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
-} from "recharts";
-import {
-  DollarSign,
-  TrendingUp,
-  CheckSquare,
+  Flame,
+  Focus,
+  ListTodo,
+  Plus,
+  Salad,
+  TimerReset,
+  CheckCircle2,
+  Circle,
+  Trash2,
+  Clock3,
+  Brain,
+  Zap,
   Target,
-  Users,
-  Filter,
-  ChevronRight,
-  BarChart3,
-  Boxes,
-  Workflow,
+  Coffee,
+  MoonStar,
+  SunMedium,
 } from "lucide-react";
+import "./App.css";
 
-/* ─────────── data ─────────── */
+type Energy = "low" | "medium" | "high";
+type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
-const TIER_DATA = [
-  { name: "Tier 1 — Prove", meta: 1400, tiktok: 600, total: 2000, leads: "5-15" },
-  { name: "Tier 2 — Validate", meta: 3500, tiktok: 1500, total: 5000, leads: "15-40" },
-  { name: "Tier 3 — Scale", meta: 7000, tiktok: 3000, total: 10000, leads: "40-80" },
-];
-
-const SPEND_PROJECTION = [
-  { day: "W1", meta: 350, tiktok: 150, total: 500 },
-  { day: "W2", meta: 350, tiktok: 150, total: 500 },
-  { day: "W3", meta: 700, tiktok: 300, total: 1000 },
-  { day: "W4", meta: 700, tiktok: 300, total: 1000 },
-  { day: "W5", meta: 875, tiktok: 375, total: 1250 },
-  { day: "W6", meta: 875, tiktok: 375, total: 1250 },
-  { day: "W7", meta: 875, tiktok: 375, total: 1250 },
-  { day: "W8", meta: 875, tiktok: 375, total: 1250 },
-  { day: "W9", meta: 1750, tiktok: 750, total: 2500 },
-  { day: "W10", meta: 1750, tiktok: 750, total: 2500 },
-  { day: "W11", meta: 1750, tiktok: 750, total: 2500 },
-  { day: "W12", meta: 1750, tiktok: 750, total: 2500 },
-];
-
-const FUNNEL_STAGES = [
-  { name: "Impressions", meta: 45000, tiktok: 60000, color: "#1877f2" },
-  { name: "Reach", meta: 15000, tiktok: 25000, color: "#7c3aed" },
-  { name: "Clicks", meta: 1200, tiktok: 1500, color: "#7c3aed" },
-  { name: "Landing", meta: 800, tiktok: 900, color: "#7c3aed" },
-  { name: "Leads", meta: 25, tiktok: 30, color: "#7c3aed" },
-  { name: "MQLs", meta: 12, tiktok: 15, color: "#10b981" },
-  { name: "SQLs", meta: 3, tiktok: 4, color: "#10b981" },
-];
-
-const CAMPAIGN_WORKFLOW = [
-  {
-    id: "c1",
-    name: "Cold Awareness — Founder POV",
-    platform: "Meta",
-    status: "active",
-    spend: 483,
-    budget: 700,
-    ctr: "1.2%",
-    cpc: "$2.40",
-    impressions: 28200,
-    leads: 8,
-    layer: "TOFU",
-  },
-  {
-    id: "c2",
-    name: "Consideration — 90-Day System",
-    platform: "Meta",
-    status: "active",
-    spend: 312,
-    budget: 490,
-    ctr: "0.9%",
-    cpc: "$2.80",
-    impressions: 14200,
-    leads: 4,
-    layer: "MOFU",
-  },
-  {
-    id: "c3",
-    name: "Conversion — Free GTM Audit",
-    platform: "Meta",
-    status: "paused",
-    spend: 180,
-    budget: 280,
-    ctr: "0.6%",
-    cpc: "$3.50",
-    impressions: 8100,
-    leads: 2,
-    layer: "BOFU",
-  },
-  {
-    id: "c4",
-    name: "Cold — Founder Marketing Team",
-    platform: "TikTok",
-    status: "active",
-    spend: 195,
-    budget: 300,
-    ctr: "1.4%",
-    cpc: "$1.60",
-    impressions: 18500,
-    leads: 5,
-    layer: "TOFU",
-  },
-  {
-    id: "c5",
-    name: "Consideration — 3-Step System",
-    platform: "TikTok",
-    status: "review",
-    spend: 95,
-    budget: 180,
-    ctr: "0.8%",
-    cpc: "$2.10",
-    impressions: 7200,
-    leads: 2,
-    layer: "MOFU",
-  },
-  {
-    id: "c6",
-    name: "Conversion — Book Call",
-    platform: "TikTok",
-    status: "draft",
-    spend: 0,
-    budget: 120,
-    ctr: "—",
-    cpc: "—",
-    impressions: 0,
-    leads: 0,
-    layer: "BOFU",
-  },
-];
-
-const KPIDATA = [
-  { label: "Blended CPL", target: "<$50", current: "$44", status: "good", delta: "-12%" },
-  { label: "Meta CPL", target: "<$60", current: "$58", status: "warning", delta: "+3%" },
-  { label: "TikTok CPL", target: "<$40", current: "$36", status: "good", delta: "-8%" },
-  { label: "Blended CTR", target: ">1.0%", current: "1.05%", status: "good", delta: "+5%" },
-  { label: "MQL Rate", target: ">30%", current: "32%", status: "good", delta: "+2%" },
-  { label: "SQL Rate", target: ">10%", current: "9%", status: "warning", delta: "-1%" },
-  { label: "Demo Show", target: ">50%", current: "54%", status: "good", delta: "+4%" },
-  { label: "Spend Pace", target: "On Track", current: "98%", status: "good", delta: "0%" },
-];
-
-const CREATIVE_PIPELINE = [
-  { name: "Founder burnout POV (reel)", status: "live", platform: "Meta", spend: "$483", ctr: "1.2%", id: "cr1" },
-  { name: "90-day system walkthrough", status: "live", platform: "Meta", spend: "$312", ctr: "0.9%", id: "cr2" },
-  { name: "GTM audit lead form", status: "paused", platform: "Meta", spend: "$180", ctr: "0.6%", id: "cr3" },
-  { name: "POV: You're the marketing team", status: "live", platform: "TikTok", spend: "$195", ctr: "1.4%", id: "cr4" },
-  { name: "3-step breakdown", status: "review", platform: "TikTok", spend: "$95", ctr: "0.8%", id: "cr5" },
-  { name: "Founder call CTA", status: "draft", platform: "TikTok", spend: "$0", ctr: "—", id: "cr6" },
-  { name: "Behind the scenes: building pipeline", status: "in_prod", platform: "Both", spend: "$0", ctr: "—", id: "cr7" },
-  { name: "Customer testimonial: founder story", status: "in_prod", platform: "Meta", spend: "$0", ctr: "—", id: "cr8" },
-];
-
-const AUDIENCE_SEGMENTS = [
-  { name: "Founder-led SaaS < 50 employees", platform: "Meta", size: "2.4M", overlap: "Low", cpm: "$22", performance: "Best" },
-  { name: "Head of Growth / VP Marketing", platform: "Meta", size: "890K", overlap: "Med", cpm: "$28", performance: "Strong" },
-  { name: "Early-stage B2B SaaS", platform: "TikTok", size: "1.8M", overlap: "Low", cpm: "$9", performance: "Best" },
-  { name: "Startup founder + productivity", platform: "TikTok", size: "3.2M", overlap: "High", cpm: "$8", performance: "Good" },
-  { name: "Lookalike — Top 1% converters", platform: "Both", size: "230K", overlap: "—", cpm: "$18", performance: "Testing" },
-];
-
-/* ─────────── components ─────────── */
-
-const COLORS = {
-  meta: "#1877f2",
-  tiktok: "#ff0050",
-  accent: "#7c3aed",
-  good: "#10b981",
-  warning: "#f59e0b",
-  danger: "#ef4444",
-  textBright: "#f0f2f5",
-  textMuted: "#8892b0",
-  surface: "#1f2833",
-  surfaceLight: "#2a3441",
+type Task = {
+  id: string;
+  title: string;
+  energy: Energy;
+  minutes: number;
+  done: boolean;
 };
 
-function Card({ children, className = "", style }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+type Meal = {
+  id: string;
+  title: string;
+  calories: number;
+  type: MealType;
+};
+
+type FocusPreset = {
+  label: string;
+  minutes: number;
+};
+
+type Blocker = {
+  id: string;
+  label: string;
+  done: boolean;
+};
+
+const TASKS_SEED: Task[] = [
+  { id: "task-1", title: "Ship homepage revision", energy: "high", minutes: 90, done: false },
+  { id: "task-2", title: "Review growth dashboard", energy: "medium", minutes: 35, done: false },
+  { id: "task-3", title: "Clear founder inbox", energy: "low", minutes: 20, done: true },
+  { id: "task-4", title: "Draft LinkedIn post", energy: "medium", minutes: 25, done: false },
+];
+
+const MEALS_SEED: Meal[] = [
+  { id: "meal-1", title: "Eggs and toast", calories: 430, type: "breakfast" },
+  { id: "meal-2", title: "Chicken rice bowl", calories: 610, type: "lunch" },
+  { id: "meal-3", title: "Protein yogurt", calories: 220, type: "snack" },
+];
+
+const PRESETS: FocusPreset[] = [
+  { label: "Sprint", minutes: 25 },
+  { label: "Deep block", minutes: 50 },
+  { label: "Long push", minutes: 75 },
+  { label: "Recovery", minutes: 15 },
+];
+
+const BLOCKERS_SEED: Blocker[] = [
+  { id: "b1", label: "Phone face down", done: true },
+  { id: "b2", label: "Inbox closed", done: false },
+  { id: "b3", label: "Slack muted", done: false },
+  { id: "b4", label: "Water on desk", done: true },
+];
+
+const CUES = [
+  "Do the next hard thing.",
+  "Protect the block. Ignore the noise.",
+  "Small reps compound.",
+  "Finish before you switch.",
+  "The timer is your contract.",
+];
+
+const ENERGY_LABELS: Record<Energy, string> = {
+  low: "Low drag",
+  medium: "Steady",
+  high: "Heavy lift",
+};
+
+const MEAL_LABELS: Record<MealType, string> = {
+  breakfast: "Breakfast",
+  lunch: "Lunch",
+  dinner: "Dinner",
+  snack: "Snack",
+};
+
+function formatMinutes(total: number) {
+  if (total < 60) return `${total}m`;
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  return mins ? `${hours}h ${mins}m` : `${hours}h`;
+}
+
+function formatClock(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function sectionTitle(icon: React.ReactNode, title: string, meta?: string) {
   return (
-    <div className={`rounded-xl p-5 border border-white/[0.06] bg-[#1a1d29] shadow-lg ${className}`} style={style}>
-      {children}
+    <div className="section-title">
+      <div className="section-title__left">
+        <span className="section-title__icon">{icon}</span>
+        <div>
+          <h2>{title}</h2>
+          {meta ? <p>{meta}</p> : null}
+        </div>
+      </div>
     </div>
   );
 }
-
-function SectionHeader({ icon: Icon, title, action }: { icon: any; title: string; action?: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-2.5">
-        <div className="p-1.5 rounded-md bg-white/5">
-          <Icon size={18} className="text-white/80" />
-        </div>
-        <h2 className="text-base font-semibold text-[#f0f2f5]">{title}</h2>
-      </div>
-      {action}
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    paused: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    review: "bg-violet-500/10 text-violet-400 border-violet-500/20",
-    draft: "bg-slate-500/10 text-slate-400 border-slate-500/20",
-    live: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    in_prod: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    good: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    warning: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  };
-  const labels: Record<string, string> = {
-    active: "Active",
-    paused: "Paused",
-    review: "Review",
-    draft: "Draft",
-    live: "Live",
-    in_prod: "In Prod",
-    good: "On Track",
-    warning: "Watch",
-  };
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded border ${styles[status] || styles.draft}`}>
-      {labels[status] || status}
-    </span>
-  );
-}
-
-function KPICard({ label, current, target, status, delta }: (typeof KPIDATA)[0]) {
-  const isGood = status === "good";
-  return (
-    <Card className="flex flex-col justify-between">
-      <div className="flex justify-between items-start mb-3">
-        <p className="text-xs text-[#8892b0] uppercase tracking-wide">{label}</p>
-        <StatusBadge status={status} />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-[#f0f2f5] mb-1">{current}</p>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium ${isGood ? "text-emerald-400" : "text-amber-400"}`}>
-            {delta}
-          </span>
-          <span className="text-xs text-[#8892b0]">Target: {target}</span>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-/* ─────────── main app ─────────── */
 
 export default function App() {
-  const [selectedTier, setSelectedTier] = useState(0);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPlatform, setFilterPlatform] = useState("all");
+  const [tasks, setTasks] = useState<Task[]>(TASKS_SEED);
+  const [meals, setMeals] = useState<Meal[]>(MEALS_SEED);
+  const [blockers, setBlockers] = useState<Blocker[]>(BLOCKERS_SEED);
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskMinutes, setTaskMinutes] = useState(30);
+  const [taskEnergy, setTaskEnergy] = useState<Energy>("medium");
+  const [mealTitle, setMealTitle] = useState("");
+  const [mealCalories, setMealCalories] = useState(450);
+  const [mealType, setMealType] = useState<MealType>("dinner");
+  const [targetCalories, setTargetCalories] = useState(2200);
+  const [selectedPreset, setSelectedPreset] = useState<FocusPreset>(PRESETS[0]);
+  const [secondsLeft, setSecondsLeft] = useState(PRESETS[0].minutes * 60);
+  const [isRunning, setIsRunning] = useState(false);
+  const [focusMinutes, setFocusMinutes] = useState(95);
+  const [cueIndex, setCueIndex] = useState(0);
 
-  const tier = TIER_DATA[selectedTier];
-  const pieData = [
-    { name: "Meta (Instagram)", value: tier.meta, color: COLORS.meta },
-    { name: "TikTok", value: tier.tiktok, color: COLORS.tiktok },
-  ];
+  useEffect(() => {
+    if (!isRunning) return;
+    const timer = window.setInterval(() => {
+      setSecondsLeft((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          setIsRunning(false);
+          setFocusMinutes((value) => value + selectedPreset.minutes);
+          setCueIndex((value) => (value + 1) % CUES.length);
+          return selectedPreset.minutes * 60;
+        }
+        return current - 1;
+      });
+    }, 1000);
 
-  const filteredWorkflow = CAMPAIGN_WORKFLOW.filter((c) => {
-    if (filterStatus !== "all" && c.status !== filterStatus) return false;
-    if (filterPlatform !== "all" && c.platform !== filterPlatform) return false;
-    return true;
-  });
+    return () => window.clearInterval(timer);
+  }, [isRunning, selectedPreset]);
 
-  const totalSpend = CAMPAIGN_WORKFLOW.reduce((s, c) => s + c.spend, 0);
-  const totalBudget = CAMPAIGN_WORKFLOW.reduce((s, c) => s + c.budget, 0);
-  const totalLeads = CAMPAIGN_WORKFLOW.reduce((s, c) => s + c.leads, 0);
+  useEffect(() => {
+    if (!isRunning) {
+      setSecondsLeft(selectedPreset.minutes * 60);
+    }
+  }, [selectedPreset, isRunning]);
+
+  const doneTasks = tasks.filter((task) => task.done).length;
+  const totalTaskMinutes = tasks.filter((task) => !task.done).reduce((sum, task) => sum + task.minutes, 0);
+  const totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0);
+  const remainingCalories = targetCalories - totalCalories;
+  const blockerScore = blockers.filter((item) => item.done).length;
+  const currentCue = CUES[cueIndex];
+
+  const nextTask = useMemo(() => tasks.find((task) => !task.done) ?? null, [tasks]);
+
+  function addTask() {
+    const title = taskTitle.trim();
+    if (!title) return;
+
+    setTasks((current) => [
+      {
+        id: crypto.randomUUID(),
+        title,
+        minutes: taskMinutes,
+        energy: taskEnergy,
+        done: false,
+      },
+      ...current,
+    ]);
+    setTaskTitle("");
+    setTaskMinutes(30);
+    setTaskEnergy("medium");
+  }
+
+  function addMeal() {
+    const title = mealTitle.trim();
+    if (!title || mealCalories <= 0) return;
+
+    setMeals((current) => [
+      {
+        id: crypto.randomUUID(),
+        title,
+        calories: mealCalories,
+        type: mealType,
+      },
+      ...current,
+    ]);
+    setMealTitle("");
+    setMealCalories(450);
+    setMealType("dinner");
+  }
+
+  function toggleTask(id: string) {
+    setTasks((current) => current.map((task) => (task.id === id ? { ...task, done: !task.done } : task)));
+  }
+
+  function removeTask(id: string) {
+    setTasks((current) => current.filter((task) => task.id !== id));
+  }
+
+  function removeMeal(id: string) {
+    setMeals((current) => current.filter((meal) => meal.id !== id));
+  }
+
+  function toggleBlocker(id: string) {
+    setBlockers((current: any) => current.map((item: Blocker) => (item.id === id ? { ...item, done: !item.done } : item)));
+  }
+
+  function startFocus(minutes: number) {
+    const preset = PRESETS.find((item) => item.minutes === minutes) ?? PRESETS[0];
+    setSelectedPreset(preset);
+    setSecondsLeft(preset.minutes * 60);
+    setIsRunning(true);
+  }
+
+  function resetFocus() {
+    setIsRunning(false);
+    setSecondsLeft(selectedPreset.minutes * 60);
+  }
+
+  const calorieProgress = Math.min((totalCalories / targetCalories) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-[#0f1115] text-[#c5c6c7] pb-12">
-      {/* Top Header */}
-      <header className="border-b border-white/[0.06] bg-[#13151a] sticky top-0 z-50">
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
-              <BarChart3 size={18} className="text-white" />
+    <div className="app-shell">
+      <div className="hero-panel">
+        <div>
+          <div className="eyebrow">Operator mode</div>
+          <h1>Lock In</h1>
+          <p className="hero-copy">
+            One board for tasks, calories, and focus. Keep the day tight. Reduce drift.
+          </p>
+        </div>
+        <div className="hero-stats">
+          <div className="hero-stat">
+            <span>Tasks done</span>
+            <strong>{doneTasks}/{tasks.length}</strong>
+          </div>
+          <div className="hero-stat">
+            <span>Calories left</span>
+            <strong>{remainingCalories >= 0 ? remainingCalories : 0}</strong>
+          </div>
+          <div className="hero-stat">
+            <span>Focus bank</span>
+            <strong>{formatMinutes(focusMinutes)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-grid">
+        <section className="panel panel--tasks">
+          {sectionTitle(<ListTodo size={18} />, "Task stack", `${tasks.length} active items`)}
+          <div className="composer">
+            <input value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} placeholder="Add a task" />
+            <div className="composer__row">
+              <select value={taskEnergy} onChange={(e) => setTaskEnergy(e.target.value as Energy)}>
+                {Object.entries(ENERGY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <input type="number" min={5} step={5} value={taskMinutes} onChange={(e) => setTaskMinutes(Number(e.target.value))} />
+              <button onClick={addTask}><Plus size={16} /> Add</button>
+            </div>
+          </div>
+
+          <div className="task-summary">
+            <div>
+              <span>Next up</span>
+              <strong>{nextTask ? nextTask.title : "Everything cleared"}</strong>
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-[#f0f2f5]">Ads Command Center</h1>
-              <p className="text-xs text-[#8892b0]">NXT Enterprises — Meta + TikTok</p>
+              <span>Remaining load</span>
+              <strong>{formatMinutes(totalTaskMinutes)}</strong>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <p className="text-xs text-[#8892b0]">Monthly Budget</p>
-              <p className="text-sm font-semibold text-[#f0f2f5]">${(totalBudget).toLocaleString()} / {tier.total.toLocaleString()}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-[#8892b0]">Spend Pace</p>
-              <p className="text-sm font-semibold text-emerald-400">{Math.round((totalSpend / totalBudget) * 100)}%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-[#8892b0]">Leads This Month</p>
-              <p className="text-sm font-semibold text-violet-400">{totalLeads}</p>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <main className="px-6 pt-6 max-w-[1600px] mx-auto">
-        {/* KPI Row */}
-        <section className="mb-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {KPIDATA.map((kpi) => (
-              <KPICard key={kpi.label} {...kpi} />
+          <div className="task-list">
+            {tasks.map((task) => (
+              <div key={task.id} className={`task-row ${task.done ? "task-row--done" : ""}`}>
+                <button className="icon-button" onClick={() => toggleTask(task.id)}>
+                  {task.done ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                </button>
+                <div className="task-row__body">
+                  <strong>{task.title}</strong>
+                  <div className="task-row__meta">
+                    <span className={`pill pill--${task.energy}`}>{ENERGY_LABELS[task.energy]}</span>
+                    <span><Clock3 size={14} /> {task.minutes} min</span>
+                  </div>
+                </div>
+                <button className="icon-button icon-button--danger" onClick={() => removeTask(task.id)}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
             ))}
           </div>
         </section>
 
-        {/* Top Row: Budget + Funnel + Projection */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
-          {/* Budget Allocation */}
-          <div className="xl:col-span-4">
-            <SectionHeader icon={DollarSign} title="Budget Allocation" />
-            <Card className="h-[380px]">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs text-[#8892b0]">Selected Tier</p>
-                  <p className="text-lg font-bold text-[#f0f2f5]">{tier.name}</p>
-                </div>
-                <div className="flex gap-1">
-                  {TIER_DATA.map((t, i) => (
-                    <button
-                      key={t.name}
-                      onClick={() => setSelectedTier(i)}
-                      className={`px-3 py-1 text-xs rounded-md border transition-all ${
-                        selectedTier === i
-                          ? "bg-violet-600/20 border-violet-500/40 text-violet-300"
-                          : "border-white/5 text-[#8892b0] hover:bg-white/5"
-                      }`}
-                    >
-                      T{i + 1}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="p-3 rounded-lg bg-white/[0.03]">
-                  <p className="text-xs text-[#8892b0] mb-1">Meta</p>
-                  <p className="text-xl font-bold text-[#1877f2]">${tier.meta.toLocaleString()}</p>
-                  <p className="text-xs text-[#8892b0]">{Math.round((tier.meta / tier.total) * 100)}%</p>
-                </div>
-                <div className="p-3 rounded-lg bg-white/[0.03]">
-                  <p className="text-xs text-[#8892b0] mb-1">TikTok</p>
-                  <p className="text-xl font-bold text-[#ff0050]">${tier.tiktok.toLocaleString()}</p>
-                  <p className="text-xs text-[#8892b0]">{Math.round((tier.tiktok / tier.total) * 100)}%</p>
-                </div>
-              </div>
-
-              <div className="h-[180px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: "#1a1d29",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: 8,
-                        color: "#c5c6c7",
-                        fontSize: 12,
-                      }}
-                      formatter={(value: any) => [`$${Number(value).toLocaleString()}`, ""] as any}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </div>
-
-          {/* Funnel Visualization */}
-          <div className="xl:col-span-4">
-            <SectionHeader icon={Filter} title="Conversion Funnel" />
-            <Card className="h-[380px]">
-              <div className="space-y-3">
-                {FUNNEL_STAGES.map((stage) => {
-                  const maxVal = Math.max(stage.meta, stage.tiktok);
-                  const metaPct = (stage.meta / maxVal) * 100;
-                  const tiktokPct = (stage.tiktok / maxVal) * 100;
-                  return (
-                    <div key={stage.name}>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="text-[#f0f2f5] font-medium">{stage.name}</span>
-                        <span className="text-[#8892b0]">
-                          M: {stage.meta.toLocaleString()} / T: {stage.tiktok.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex gap-1.5">
-                        <div className="flex-1 h-5 bg-white/[0.04] rounded overflow-hidden">
-                          <div
-                            className="h-full bg-[#1877f2] rounded flex items-center justify-end pr-1.5"
-                            style={{ width: `${metaPct}%` }}
-                          >
-                            {metaPct > 30 && (
-                              <span className="text-[10px] text-white/90 font-medium">{stage.meta.toLocaleString()}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex-1 h-5 bg-white/[0.04] rounded overflow-hidden">
-                          <div
-                            className="h-full bg-[#ff0050] rounded flex items-center justify-end pr-1.5"
-                            style={{ width: `${tiktokPct}%` }}
-                          >
-                            {tiktokPct > 30 && (
-                              <span className="text-[10px] text-white/90 font-medium">{stage.tiktok.toLocaleString()}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-white/[0.06]">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded bg-[#1877f2]" />
-                  <span className="text-xs text-[#8892b0]">Meta</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded bg-[#ff0050]" />
-                  <span className="text-xs text-[#8892b0]">TikTok</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Spend Projection */}
-          <div className="xl:col-span-4">
-            <SectionHeader icon={TrendingUp} title="Spend Projection (12 Weeks)" />
-            <Card className="h-[380px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={SPEND_PROJECTION}>
-                  <defs>
-                    <linearGradient id="metaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1877f2" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#1877f2" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="tiktokGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ff0050" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#ff0050" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                  <XAxis dataKey="day" stroke="#8892b0" fontSize={11} />
-                  <YAxis stroke="#8892b0" fontSize={11} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "#1a1d29",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 8,
-                      color: "#c5c6c7",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Area type="monotone" dataKey="meta" name="Meta" stroke="#1877f2" fill="url(#metaGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="tiktok" name="TikTok" stroke="#ff0050" fill="url(#tiktokGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </Card>
-          </div>
-        </div>
-
-        {/* Campaign Workflow Board */}
-        <section className="mb-8">
-          <SectionHeader
-            icon={Workflow}
-            title={`Campaign Workflow (${filteredWorkflow.length})`}
-            action={
-              <div className="flex gap-2">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="bg-[#1a1d29] border border-white/[0.08] text-xs rounded-md px-2 py-1 text-[#8892b0] outline-none focus:border-violet-500/40"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="paused">Paused</option>
-                  <option value="review">Review</option>
-                  <option value="draft">Draft</option>
-                </select>
-                <select
-                  value={filterPlatform}
-                  onChange={(e) => setFilterPlatform(e.target.value)}
-                  className="bg-[#1a1d29] border border-white/[0.08] text-xs rounded-md px-2 py-1 text-[#8892b0] outline-none focus:border-violet-500/40"
-                >
-                  <option value="all">All Platforms</option>
-                  <option value="Meta">Meta</option>
-                  <option value="TikTok">TikTok</option>
-                </select>
-              </div>
-            }
-          />
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/[0.06] text-[#8892b0] text-xs uppercase tracking-wide">
-                    <th className="text-left pb-3 pr-4">Campaign</th>
-                    <th className="text-left pb-3 pr-4">Status</th>
-                    <th className="text-left pb-3 pr-4">Layer</th>
-                    <th className="text-right pb-3 pr-4">Spend</th>
-                    <th className="text-right pb-3 pr-4">Budget</th>
-                    <th className="text-right pb-3 pr-4">Pace</th>
-                    <th className="text-right pb-3 pr-4">CTR</th>
-                    <th className="text-right pb-3 pr-4">CPC</th>
-                    <th className="text-right pb-3 pr-4">Leads</th>
-                    <th className="text-right pb-3">ROI Est.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredWorkflow.map((c) => {
-                    const pace = Math.round((c.spend / c.budget) * 100);
-                    const leadValue = c.leads > 0 ? Math.round(c.spend / c.leads) : 0;
-                    return (
-                      <tr key={c.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-1.5 h-1.5 rounded-full shrink-0"
-                              style={{ background: c.platform === "Meta" ? COLORS.meta : COLORS.tiktok }}
-                            />
-                            <div>
-                              <p className="text-[#f0f2f5] font-medium">{c.name}</p>
-                              <p className="text-xs text-[#8892b0]">{c.platform}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 pr-4">
-                          <StatusBadge status={c.status} />
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/[0.05] text-[#8892b0] border border-white/[0.06]">
-                            {c.layer}
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4 text-right text-[#f0f2f5]">${c.spend}</td>
-                        <td className="py-3 pr-4 text-right text-[#8892b0]">${c.budget}</td>
-                        <td className="py-3 pr-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="w-16 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${pace}%`,
-                                  background: pace > 90 ? "#ef4444" : pace > 70 ? "#f59e0b" : "#10b981",
-                                }}
-                              />
-                            </div>
-                            <span className="text-xs text-[#8892b0]">{pace}%</span>
-                          </div>
-                        </td>
-                        <td className="py-3 pr-4 text-right text-[#f0f2f5]">{c.ctr}</td>
-                        <td className="py-3 pr-4 text-right text-[#f0f2f5]">{c.cpc}</td>
-                        <td className="py-3 pr-4 text-right text-[#f0f2f5] font-medium">{c.leads}</td>
-                        <td className="py-3 text-right text-[#8892b0]">
-                          {leadValue > 0 ? `$${leadValue}` : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        <section className="panel panel--focus">
+          {sectionTitle(<Focus size={18} />, "Focus mode", isRunning ? "Session live" : "Ready to start")}
+          <div className="timer-card">
+            <div className="timer-card__ring">
+              <span>{formatClock(secondsLeft)}</span>
+              <small>{selectedPreset.label}</small>
             </div>
-          </Card>
-        </section>
-
-        {/* Creative Pipeline + Audience Segments */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-          {/* Creative Pipeline */}
-          <div>
-            <SectionHeader icon={Boxes} title="Creative Pipeline" />
-            <div className="space-y-2">
-              {CREATIVE_PIPELINE.map((cr) => (
-                <Card key={cr.id} className="p-3 !py-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-1 h-8 rounded-full"
-                        style={{
-                          background:
-                            cr.platform === "Meta"
-                              ? COLORS.meta
-                              : cr.platform === "TikTok"
-                              ? COLORS.tiktok
-                              : COLORS.accent,
-                        }}
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-[#f0f2f5]">{cr.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <StatusBadge status={cr.status} />
-                          <span className="text-xs text-[#8892b0]">{cr.platform}</span>
-                          {cr.spend !== "$0" && (
-                            <span className="text-xs text-[#8892b0]">{cr.spend} · {cr.ctr} CTR</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <ChevronRight size={14} className="text-[#8892b0]" />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Audience Segments */}
-          <div>
-            <SectionHeader icon={Users} title="Audience Segments" />
-            <Card className="h-full">
-              <div className="space-y-3">
-                {AUDIENCE_SEGMENTS.map((seg) => (
-                  <div
-                    key={seg.name}
-                    className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.04] hover:border-white/[0.08] transition-colors"
+            <div className="timer-card__side">
+              <p className="cue">{currentCue}</p>
+              <div className="preset-list">
+                {PRESETS.map((preset) => (
+                  <button
+                    key={preset.label}
+                    className={preset.minutes === selectedPreset.minutes ? "is-active" : ""}
+                    onClick={() => startFocus(preset.minutes)}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="text-sm font-medium text-[#f0f2f5]">{seg.name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span
-                            className="text-xs px-1.5 py-0.5 rounded"
-                            style={{
-                              background:
-                                seg.platform === "Meta"
-                                  ? "rgba(24,119,242,0.12)"
-                                  : seg.platform === "TikTok"
-                                  ? "rgba(255,0,80,0.12)"
-                                  : "rgba(124,58,237,0.12)",
-                              color:
-                                seg.platform === "Meta"
-                                  ? "#1877f2"
-                                  : seg.platform === "TikTok"
-                                  ? "#ff0050"
-                                  : "#a78bfa",
-                            }}
-                          >
-                            {seg.platform}
-                          </span>
-                          <span className="text-xs text-[#8892b0]">{seg.size} reach</span>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded border ${
-                          seg.performance === "Best"
-                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                            : seg.performance === "Strong"
-                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                            : seg.performance === "Good"
-                            ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
-                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                        }`}
-                      >
-                        {seg.performance}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs text-[#8892b0]">
-                      <span>Overlap: {seg.overlap}</span>
-                      <span>CPM: {seg.cpm}</span>
-                    </div>
-                  </div>
+                    <TimerReset size={15} /> {preset.label} · {preset.minutes}m
+                  </button>
                 ))}
               </div>
-            </Card>
+              <div className="focus-actions">
+                <button className="button button--primary" onClick={() => setIsRunning((value) => !value)}>
+                  {isRunning ? <MoonStar size={16} /> : <Zap size={16} />}
+                  {isRunning ? "Pause session" : "Start now"}
+                </button>
+                <button className="button button--ghost" onClick={resetFocus}>
+                  <SunMedium size={16} /> Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="focus-checklist">
+            <div className="focus-checklist__header">
+              <strong>Lock-in checklist</strong>
+              <span>{blockerScore}/{blockers.length} done</span>
+            </div>
+            {blockers.map((item) => (
+              <button key={item.id} className={`check-row ${item.done ? "check-row--done" : ""}`} onClick={() => toggleBlocker(item.id)}>
+                {item.done ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel panel--calories">
+          {sectionTitle(<Flame size={18} />, "Calories", `${totalCalories}/${targetCalories}`)}
+          <div className="macro-card">
+            <div className="macro-card__top">
+              <div>
+                <span>Daily target</span>
+                <strong>{targetCalories} kcal</strong>
+              </div>
+              <input type="number" min={1200} step={50} value={targetCalories} onChange={(e) => setTargetCalories(Number(e.target.value))} />
+            </div>
+            <div className="progress-track">
+              <div className="progress-bar" style={{ width: `${calorieProgress}%` }} />
+            </div>
+            <div className="macro-card__bottom">
+              <span>{remainingCalories > 0 ? `${remainingCalories} kcal left` : "Target hit"}</span>
+              <strong>{Math.round(calorieProgress)}%</strong>
+            </div>
+          </div>
+
+          <div className="composer">
+            <input value={mealTitle} onChange={(e) => setMealTitle(e.target.value)} placeholder="Log a meal" />
+            <div className="composer__row">
+              <select value={mealType} onChange={(e) => setMealType(e.target.value as MealType)}>
+                {Object.entries(MEAL_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
+              </select>
+              <input type="number" min={0} step={10} value={mealCalories} onChange={(e) => setMealCalories(Number(e.target.value))} />
+              <button onClick={addMeal}><Salad size={16} /> Save</button>
+            </div>
+          </div>
+
+          <div className="meal-list">
+            {meals.map((meal) => (
+              <div key={meal.id} className="meal-row">
+                <div>
+                  <strong>{meal.title}</strong>
+                  <span>{MEAL_LABELS[meal.type]}</span>
+                </div>
+                <div className="meal-row__right">
+                  <strong>{meal.calories}</strong>
+                  <button className="icon-button icon-button--danger" onClick={() => removeMeal(meal.id)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className="bottom-strip">
+        <div className="mini-panel">
+          <Brain size={18} />
+          <div>
+            <span>Focus cue</span>
+            <strong>{currentCue}</strong>
           </div>
         </div>
-
-        {/* Pre-Launch Checklist */}
-        <section className="mb-8">
-          <SectionHeader icon={CheckSquare} title="Pre-Launch Checklist" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              "Creative assets produced for all 8 launch ads",
-              "Exclusion audiences built (CRM list, employees)",
-              "Conversion events tested in Events Manager",
-              "UTM taxonomy documented and shared with sales",
-              "Landing pages load <2s on mobile",
-              "Lead form routing tested end-to-end",
-              "Budget caps set per layer in Ads Manager",
-              "Daily monitoring schedule defined",
-              "Kill rules: pause ads with CTR <0.3% (Meta) / <0.2% (TikTok)",
-            ].map((item, idx) => (
-              <Card key={idx} className="!p-3">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5 w-4 h-4 rounded border-white/20 bg-[#1a1d29] text-violet-500 focus:ring-violet-500/40"
-                  />
-                  <span className="text-sm text-[#8892b0] group-hover:text-[#c5c6c7] transition-colors leading-relaxed">
-                    {item}
-                  </span>
-                </label>
-              </Card>
-            ))}
+        <div className="mini-panel">
+          <Target size={18} />
+          <div>
+            <span>Best next move</span>
+            <strong>{nextTask ? nextTask.title : "Shut down clean"}</strong>
           </div>
-        </section>
-
-        {/* 90-Day Roadmap */}
-        <section className="mb-10">
-          <SectionHeader icon={Target} title="90-Day Campaign Roadmap" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                stage: "Days 1-14",
-                title: "Launch & Learn",
-                items: ["Launch all 8 ads", "Lowest Cost bidding", "Daily monitoring", "Validate creative-market fit"],
-                color: "#1877f2",
-              },
-              {
-                stage: "Days 15-30",
-                title: "Optimize & Rotate",
-                items: ["Double top performers", "New creative variants", "Build retargeting pools", "Layer 1 engagement focus"],
-                color: "#7c3aed",
-              },
-              {
-                stage: "Days 31-60",
-                title: "Validate & Ramp",
-                items: ["Test Cost Cap bidding", "Tier 2 readiness", "Refine exclusions", "Add Lookalike audiences"],
-                color: "#ff0050",
-              },
-              {
-                stage: "Days 61-90",
-                title: "Scale or Pivot",
-                items: ["Move to Tier 3 ($10K)", "Batch production", "Review blended CAC", "Channel mix decision"],
-                color: "#10b981",
-              },
-            ].map((phase) => (
-              <Card key={phase.stage} className="border-t-2" style={{ borderTopColor: phase.color }}>
-                <p className="text-xs text-[#8892b0] mb-1">{phase.stage}</p>
-                <h3 className="text-sm font-semibold text-[#f0f2f5] mb-3">{phase.title}</h3>
-                <ul className="space-y-2">
-                  {phase.items.map((item) => (
-                    <li key={item} className="text-xs text-[#8892b0] flex items-start gap-2">
-                      <ChevronRight size={12} className="mt-0.5 shrink-0 text-[#8892b0]" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
+        </div>
+        <div className="mini-panel">
+          <Coffee size={18} />
+          <div>
+            <span>Fuel status</span>
+            <strong>{remainingCalories > 400 ? "Plenty left" : "Plan dinner now"}</strong>
           </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="text-center text-xs text-[#8892b0] border-t border-white/[0.06] pt-6">
-          NXT Enterprises — Pre-seed B2B SaaS. Keep it systems-minded. Cut what doesn't move pipeline by Day 21.
-        </footer>
-      </main>
+        </div>
+      </div>
     </div>
   );
 }
