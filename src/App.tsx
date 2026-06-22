@@ -109,7 +109,7 @@ function formatClock(seconds: number) {
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
 
-function sectionTitle(icon: React.ReactNode, title: string, meta?: string) {
+function sectionTitle(icon: ReactNode, title: string, meta?: string) {
   return (
     <div className="section-title">
       <div className="section-title__left">
