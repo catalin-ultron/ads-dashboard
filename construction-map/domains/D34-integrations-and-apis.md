@@ -48,7 +48,7 @@ Event catalogue (`lib/open_project/webhooks/event_resources/*.rb`): `project:cre
 
 | Model | Fields |
 |---|---|
-| Storage (STI: NextcloudStorage, OneDriveStorage, SharepointStorage) | name, host, provider config, automatic management flag |
+| Storage (STI: NextcloudStorage, OneDriveStorage, SharepointStorage; `nextcloud_storage.rb`, `one_drive_storage.rb`, `sharepoint_storage.rb`) | name; scope `automatic_management_enabled` (used in `project_storage.rb`); other columns not read |
 | ProjectStorage | project_id, storage_id (unique per project), project_folder_mode enum {inactive, manual, automatic}, project_folder_id, creator |
 | FileLink | storage_id, container (polymorphic, only `WorkPackage`), origin_id (required), origin_name, origin_mime_type, origin_created_by_name, origin_last_modified_by_name, transient origin_status {view_allowed, view_not_allowed, not_found, error} |
 
@@ -83,7 +83,7 @@ Predefined connectors (`java/.../common/entities/PredefinedConnectors.java:34-59
 4. Errors: contract errors -> `ErrorBase.create_and_merge_errors`; dependent-result errors are merged into base with "error in dependent" messages (`modify.rb:43-86`); `ActiveRecord::StaleObjectError` -> 409 `UpdateConflict` (`root_api.rb:304`, `lib/api/errors/conflict.rb`). Optimistic locking: payload must echo `lockVersion` (`lib/api/v3/work_packages/work_package_representer.rb:326`, `parse_params_service.rb:44`).
 5. Collections: `offset` (1-based page) and `pageSize`; links `jumpTo`, `changeSize`, `previousByOffset`, `nextByOffset` (absent at bounds); `pageSize=0` returns only totals (`lib/api/decorators/offset_paginated_collection.rb`).
 6. Filters: `filters=[{"<attr>":{"operator":"<op>","values":[...]}}]`, `sortBy=[["attr","asc"]]`, `groupBy=attr`, converted to AR names and applied to `<Model>Query` (`app/services/params_to_query_service.rb`).
-7. Forms: `.../form` endpoints run the contract without saving and return schema + validation errors (`lib/api/decorators/form.rb`, `create_form.rb`, `update_form.rb`).
+7. Forms: `.../form` endpoints (`lib/api/v3/work_packages/create_form_api.rb`, `update_form_api.rb`; decorators `lib/api/decorators/form.rb`, `create_form.rb`, `update_form.rb`) return schema + validation errors before commit (inferred from file names; bodies not read).
 8. Mounted resources (`lib/api/v3/root.rb:45-95`): actions, activities, attachments, backups, capabilities, categories, configuration, custom actions/fields/options, days, grids, notifications, help texts, memberships, news, OAuth applications/client credentials, portfolios, principals, priorities, programs, projects, project phases, queries, relations, reminders, revisions, roles, shares, statuses, types, users, placeholder users, groups, versions, views, wiki pages, workspaces, work packages.
 
 **Authentication strategies** (`openproject/lib_static/open_project/authentication/strategies/warden/`)

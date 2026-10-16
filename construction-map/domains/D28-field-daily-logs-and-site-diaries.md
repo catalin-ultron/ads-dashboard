@@ -24,7 +24,7 @@
 
 ### LibrePlan progress (`libreplan/libreplan-business/src/main/resources/org/libreplan/business/advance/entities/Advance.hbm.xml`)
 
-- **AdvanceType** `advance_type` (`:7`): `unitName` unique (`:17`), `defaultMaxValue` (`:19`), `unitPrecision` (`:23`), `percentage` bool (`:27`), `active`, `updatable`, `qualityForm` flag (inferred from QualityForm.advanceType link).
+- **AdvanceType** `advance_type` (`:7`): `unitName` unique (`:17`), `defaultMaxValue` (`:19`), `unitPrecision` (`:23`), `percentage` bool (`:27`), `active`, `updatable`, `quality_form` bool (marks types created for quality forms, inferred).
 - **DirectAdvanceAssignment** (`:48-60`): N:1 orderElement, N:1 advanceType, `reportGlobalAdvance` bool (which assignment drives the task's global %), `maxValue` scale 2 (budget quantity); sorted set of measurements.
 - **AdvanceMeasurement** `advance_measurement` (`:91`): `date`, `value` scale 2, `communicationDate`; consolidated values link to planning tasks.
 - **IndirectAdvanceAssignment** (`:127`): aggregated on parents.
@@ -32,7 +32,7 @@
 ### ERPNext daily status collection
 
 - **Project** fields `collect_progress`, `frequency` (Hourly | Twice Daily | Daily | Weekly), `from_time`, `to_time`, `first_email`, `second_email`, `daily_time_to_send`, `day_to_send`, `weekly_time_to_send`, `subject`, `message`, `holiday_list`, `users` Table(Project User) (`erpnext/erpnext/projects/doctype/project/project.json`).
-- **Project Update** (`erpnext/erpnext/projects/doctype/project_update/project_update.json`): `project`, `date`, `time`, `sent`, `users` Table(Project User: `user`, `full_name`, `project_status` HTML of the reply). Naming `UPDATE-.project.-.YY.MM.DD.-.####` (`project.py:767`).
+- **Project Update** (`erpnext/erpnext/projects/doctype/project_update/project_update.json`): `project`, `date`, `time`, `sent`, `users` Table(Project User: `user`, `full_name`, `project_status` HTML of the reply). Naming `UPDATE-.project.-.YY.MM.DD.-.####` (`project.py:769`).
 
 ### OpenProject time and unit costs (`openproject/modules/costs/db/migrate/tables/`)
 
