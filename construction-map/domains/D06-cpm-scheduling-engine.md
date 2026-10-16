@@ -242,11 +242,11 @@ After an ALAP activity's late dates are set, ES/EF are recomputed from successor
 
 ### A9. Float (PSC)
 
-- Start float = working-hours variance(ES, LS) on activity effective calendar; finish float = variance(EF, LF) (PSC:39-60).
-- Total float (PSC:95-160): complete → 0. Option START_SLACK → start float; FINISH_SLACK → finish float; SMALLEST_SLACK (MPXJ default, `ProjectProperties.java:3971`) → finish float for in-progress activities, otherwise min(start, finish). Negative values are kept.
-- Free float (PSC:62-93): 0 for activities with expected finish, complete, LOE, WBS nodes, Mandatory Finish. Per successor (LOE successors excluded) the link free float on the predecessor calendar (PSC:174-231), using P remaining early dates when P has started:
+- Start float = working-hours variance(ES, LS) on activity effective calendar; finish float = variance(EF, LF) (PSC:59-83).
+- Total float (PSC:115-193): complete → 0. Option START_SLACK → start float; FINISH_SLACK → finish float; SMALLEST_SLACK (MPXJ default, `ProjectProperties.java:3971`) → finish float for in-progress activities, otherwise min(start, finish). Negative values are kept.
+- Free float (PSC:85-113): 0 for activities with expected finish, complete, LOE, WBS nodes, Mandatory Finish. Per successor (LOE successors excluded) the link free float on the predecessor calendar (PSC:211-295), using P remaining early dates when P has started:
   - FS: variance(P.EF + L, S.ES); SS: variance(P.ES + L', S.ES) where L' = max(0, L − P.actualDuration); FF: variance(P.EF + L, S.EF); SF: variance(P.ES + L, S.EF).
-  - Duplicate links to the same successor merge: both ≥ 0 → min, else max (PSC:162-170).
+  - Duplicate links to the same successor merge: both ≥ 0 → min, else max (PSC:195-209).
   - FF = min over successors; with no successors: Mandatory Start/Finish → 0, else variance(EF, project scheduled finish). Negative → 0. Rounded to whole minutes.
 - Critical (`mpxj/src/main/java/org/mpxj/Task.java:6814-6831`): false if actual finish or TF null; TF converted to the threshold's units; critical when TF ≤ `criticalSlackLimit` and % complete ≠ 100 and auto-scheduled.
 - Longest path (PS:4056-4087): activities whose EF = max EF seed a recursive walk over predecessors through `driving` links; WBS Summary activities with EF = max EF also flagged. P6 `driving_path_flag` is the stored result.

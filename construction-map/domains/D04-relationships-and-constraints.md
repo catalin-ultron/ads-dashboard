@@ -16,7 +16,7 @@
 
 | Column | Type | Notes |
 |---|---|---|
-| `task_pred_id` | int PK | generated if null (TPR:598-602) |
+| `task_pred_id` | int PK | generated if null (TableProjectReader.java:598-602) |
 | `task_id` | int FK → TASK | successor |
 | `pred_task_id` | int FK → TASK | predecessor; may belong to another project |
 | `pred_type` | enum | `PR_FS`, `PR_FF`, `PR_SS`, `PR_SF` (`mpxj/src/main/java/org/mpxj/primavera/RelationTypeHelper.java`) |
@@ -27,24 +27,24 @@ PMXML `RelationshipType` (`mpxj/src/main/java/org/mpxj/primavera/schema/Relation
 
 MPXJ in-memory `Relation` (`mpxj/src/main/java/org/mpxj/Relation.java:164-170`): `uniqueID`, `predecessorTask`, `successorTask`, `type` (`RelationType` FINISH_START/START_START/FINISH_FINISH/START_FINISH), `lag` (`Duration` with units), `notes`, mutable `driving` (output of scheduling). Multiple links between the same pair are allowed (free-float merge rule handles duplicates).
 
-MPXJ `ExternalRelation` (`mpxj/src/main/java/org/mpxj/primavera/ExternalRelation.java:48-180`): `uniqueID`, `externalTaskUniqueID`, `targetTask` (the in-project end), `type`, `lag`, `predecessor` flag (true = the external task is the predecessor), `notes`. Created when one end of a `TASKPRED` row is missing from the project being read (TPR:625-641).
+MPXJ `ExternalRelation` (`mpxj/src/main/java/org/mpxj/primavera/ExternalRelation.java:48-180`): `uniqueID`, `externalTaskUniqueID`, `targetTask` (the in-project end), `type`, `lag`, `predecessor` flag (true = the external task is the predecessor), `notes`. Created when one end of a `TASKPRED` row is missing from the project being read (TableProjectReader.java:625-641).
 
-Activity external surrogate dates (`TASK.external_early_start_date`, `TASK.external_late_end_date` → EXTERNAL_EARLY_START, EXTERNAL_LATE_FINISH, TPR:1050-1051).
+Activity external surrogate dates (`TASK.external_early_start_date`, `TASK.external_late_end_date` → EXTERNAL_EARLY_START, EXTERNAL_LATE_FINISH, TableProjectReader.java:1050-1051).
 
 ### P6 constraints (on `TASK`)
 
 | Column | Values (XER code → MPXJ `ConstraintType`) |
 |---|---|
 | `cstr_type`, `cstr_date` | `CS_MSO` START_ON, `CS_MSOB` START_NO_LATER_THAN (Start On or Before), `CS_MSOA` START_NO_EARLIER_THAN (Start On or After), `CS_MEO` FINISH_ON, `CS_MEOB` FINISH_NO_LATER_THAN, `CS_MEOA` FINISH_NO_EARLIER_THAN, `CS_ALAP` AS_LATE_AS_POSSIBLE, `CS_MANDSTART` MUST_START_ON (Mandatory Start), `CS_MANDFIN` MUST_FINISH_ON (Mandatory Finish) (`mpxj/src/main/java/org/mpxj/primavera/ConstraintTypeHelper.java:112-135`) |
-| `cstr_type2`, `cstr_date2` | secondary constraint, same codes (TPR:1036-1037) |
+| `cstr_type2`, `cstr_date2` | secondary constraint, same codes (TableProjectReader.java:1036-1037) |
 
 Null constraint type is treated as AS_SOON_AS_POSSIBLE (`PrimaveraScheduler.java:4280`).
 
-Project: `PROJECT.plan_end_date` → `mustFinishBy` (TPR:116); `PROJECT.scd_end_date` → scheduledFinish (output).
+Project: `PROJECT.plan_end_date` → `mustFinishBy` (TableProjectReader.java:116); `PROJECT.scd_end_date` → scheduledFinish (output).
 
 ### Relationship lag calendar option
 
-`SCHEDOPTIONS.sched_calendar_on_relationship_lag` → `RelationshipLagCalendar` {`rcal_Predecessor`, `rcal_Successor`, `rcal_ProjDefault`, `rcal_24Hour`} (`mpxj/src/main/java/org/mpxj/primavera/RelationshipLagCalendarHelper.java`; TPR:863). MPXJ default PREDECESSOR (`mpxj/src/main/java/org/mpxj/ProjectProperties.java:3972`). Other link options stored but unused by the scheduler: `sched_outer_depend_type` (`SD_None` → ignore other-project relationships, TPR:850), `sched_lag_early_start_flag` (SS lag from early start, TPR:858).
+`SCHEDOPTIONS.sched_calendar_on_relationship_lag` → `RelationshipLagCalendar` {`rcal_Predecessor`, `rcal_Successor`, `rcal_ProjDefault`, `rcal_24Hour`} (`mpxj/src/main/java/org/mpxj/primavera/RelationshipLagCalendarHelper.java`; TableProjectReader.java:863). MPXJ default PREDECESSOR (`mpxj/src/main/java/org/mpxj/ProjectProperties.java:3972`). Other link options stored but unused by the scheduler: `sched_outer_depend_type` (`SD_None` → ignore other-project relationships, TableProjectReader.java:850), `sched_lag_early_start_flag` (SS lag from early start, TableProjectReader.java:858).
 
 ### IFC (IfcOpenShell)
 
@@ -77,7 +77,7 @@ All four link types with lag, per-progress-state rules, lag calendar selection a
 - Negative lag result before the data date is clamped to the data date (PrimaveraDateCalculator.java:65-68).
 - For progressed predecessors positive lag is partially consumed: remaining lag = lag − working time (lag calendar) from predecessor actual start (SS/SF) or actual finish (FS/FF) to the data date, or lag − predecessor actual duration for in-progress SS (PrimaveraScheduler.java:1093-1103, 1402-1423, 1797-1809).
 - Driving flag: in the forward pass every predecessor link whose candidate ES (after next-work-start on the successor calendar) equals the maximum is marked driving; a constraint that overrides logic clears the set (PrimaveraScheduler.java:721-727, 392, 551-554).
-- Link free float: FS variance(P.EF+L, S.ES); SS variance(P.ES+L′, S.ES); FF variance(P.EF+L, S.EF); SF variance(P.ES+L, S.EF), on the predecessor calendar in hours (`PrimaveraSlackCalculator.java:174-231`). It is computed per link but only the minimum is stored on the activity.
+- Link free float: FS variance(P.EF+L, S.ES); SS variance(P.ES+L′, S.ES); FF variance(P.EF+L, S.EF); SF variance(P.ES+L, S.EF), on the predecessor calendar in hours (`PrimaveraSlackCalculator.java:211-295`). It is computed per link but only the minimum is stored on the activity.
 - FF and SF predecessors disable the expected-finish override (PrimaveraScheduler.java:582-585).
 
 ### Constraint semantics in the P6 engine
@@ -109,7 +109,7 @@ Backward pass (PrimaveraScheduler.java:806-904):
 
 Mandatory constraints therefore produce negative float when logic disagrees. ALAP: after late dates, ES/EF are re-placed as late as successors' early dates allow (PrimaveraScheduler.java:3158-3295), consuming free float; ALAP-driven links get the driving flag only if the successor is not an open-ended ALAP.
 
-Free float is forced to 0 for Mandatory Finish, and for open-ended Mandatory Start/Finish (`PrimaveraSlackCalculator.java:66-70, 249-257`).
+Free float is forced to 0 for Mandatory Finish, and for open-ended Mandatory Start/Finish (`PrimaveraSlackCalculator.java:85-92, 314-319`).
 
 ### Must-finish-by (PrimaveraScheduler.java:94-113, 770-786)
 
@@ -131,7 +131,7 @@ Free float is forced to 0 for Mandatory Finish, and for open-ended Mandatory Sta
 
 ### TaskJuggler gaps and limits
 
-`earliestStart` (`taskjuggler/lib/taskjuggler/TaskScenario.rb:1173-1228`): for each `depends` entry, candidate = other task's start/end per `onEnd`; walk `gapLength` working slots on the project scoreboard; candidate = max(after-length, date + gapDuration); result = max over dependencies and any parent explicit start. `latestEnd` (1230-1282) mirrors with `precedes`, min, parent explicit end. `minstart/maxstart/minend/maxend` are checked after scheduling and produce warnings, not hard constraints (TaskScenario.rb `postScheduleCheck`, ~470-500).
+`earliestStart` (`taskjuggler/lib/taskjuggler/TaskScenario.rb:1173-1228`): for each `depends` entry, candidate = other task's start/end per `onEnd`; walk `gapLength` working slots on the project scoreboard; candidate = max(after-length, date + gapDuration); result = max over dependencies and any parent explicit start. `latestEnd` (1230-1282) mirrors with `precedes`, min, parent explicit end. `minstart/maxstart/minend/maxend` are checked after scheduling and produce warnings, not hard constraints (TaskScenario.rb `postScheduleCheck`, 435-597, e.g. `minstart` at 477).
 
 ### Logic validation
 
