@@ -163,7 +163,7 @@ Duration wins over finish when both are given; starts snapped to the next workin
 - P6 activity status: Not Started (`TK_NotStart`, no actual start) → In Progress (`TK_Active`, actual start) → Completed (`TK_Complete`, actual finish). The scheduler branches on actual start/finish, not on the status code.
 - LibrePlan task status (`planner/entities/Task.java:1172-1265`): FINISHED (advance = 1) → else IN_PROGRESS (0 < advance < 1 or work reports attached) → else READY_TO_START (all END_START origins finished and START_START origins started, including parents' dependencies) → else BLOCKED. Cached in `currentStatus` once FINISHED/IN_PROGRESS.
 - TaskJuggler status (`TaskScenario.rb:2477-2498`): complete 0 → "not started" (milestone "not reached"), ≥ 100 → "done", else "in progress", unknown if completion not computable; gauge: on schedule / ahead / behind vs computed completion (2500-2532).
-- ERPNext task status validated against dependencies: cannot close while a `depends_on` task is open (task.py:183-203).
+- ERPNext task status (`erpnext/erpnext/projects/doctype/task/task.py:183-203`): template tasks forced to Template; Overdue without overdue condition reverts to Working (if actual time) or Open; transition to Completed refused while any `depends_on` task is not Completed/Cancelled, then sets `completed_on` and closes assignments.
 - P6 feedback/review: fields ReviewRequired, ReviewStatus, ReviewFinishDate, IsNewFeedback exist; transitions not implemented.
 
 ## Cross-domain links
