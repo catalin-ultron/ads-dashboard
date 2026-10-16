@@ -85,6 +85,8 @@ Alert rule = per user (project override else global, via `applicable(project)`; 
 - Constraints of type RFI/submittal (D27), material/PO (D19), permit/design documents (D25), labor/equipment (D07).
 - Assignments and time actuals (D32); notifications on assignment/due dates (D12.04).
 - Field execution logs (D28) and quality checklists (D29) for task checklists.
+- Pull-plan conversion writes activities and relationships (D03, D04) and uses the backward pass of the CPM engine (D06); takt zones reuse location codes (D09).
+- Task alerts reuse the notification engine and per-user settings (D12.04).
 
 ## Gaps
 - Task fields for LPS: company/trade, crew size, location, proposed due date, task type, checklist items; constraint that task dates lie within the parent activity's dates (ERPNext checks only parent-task end and project dates).
