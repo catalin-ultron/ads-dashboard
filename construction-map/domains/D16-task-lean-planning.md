@@ -10,6 +10,9 @@
 | D16.04 | Weekly commitments | OpenProject sprint start/finish (lock scope, carry-over) | partial | Sprint start locks a time-box and creates a task board; no per-task committer/commit date |
 | D16.05 | Percent Plan Complete | OpenProject `Burndown` (remaining story points per working day from journals) | partial | Journal time-line replay gives as-of-day state needed for PPC; PPC formula itself absent |
 | D16.06 | Reasons for non-completion | none | none | Finish service offers carry-over actions but records no reason code |
+| D16.07 | Pull planning / phase planning | TaskJuggler ALAP (`forward=false`) backward scheduling; Odoo `project.milestone` + task dependencies; ERPNext template-to-project task conversion | partial | Backward-from-end scheduling, milestones and dependency-preserving task instantiation exist separately; no trade handoff or sticky-note model |
+| D16.08 | Takt planning | none | none | No zone, takt time or wagon/train entity in any source (grep "takt" hits only an MPXJ locale file) |
+| D16.09 | Task notifications | OpenProject date alerts (`notification_settings.start_date/due_date/overdue`, reasons `date_alert_*`), daily digest; ERPNext daily overdue job | partial | Due-date and overdue alerts with immediate/daily delivery; no proposed-due-date trigger, no weekly frequency |
 
 ## Storage model
 
@@ -29,6 +32,14 @@
 | `work_packages` additions | `sprint_id`, `backlog_bucket_id`, `position`, `story_points` | check `backlog_bucket_id IS NULL OR sprint_id IS NULL` (`20260416213200_...`) |
 | `done_statuses_for_project` | `project_id`, `status_id` | per-project "done" definition (`db/migrate/tables/done_statuses_for_project.rb`) |
 | project `settings.sprint_sharing` | {no_sharing, share_all_projects, share_subprojects, receive_shared} | `app/models/projects/sprint_settings.rb:33-38` |
+
+### Task notification settings (OpenProject)
+`notification_settings` integer columns `start_date` (default 1), `due_date` (default 1), `overdue` (default nil) = days before start/due or overdue repeat interval, per user globally or per project (`openproject/db/migrate/tables/notification_settings.rb`); allowed values start/due ∈ {nil, 0, 1, 3, 7}, overdue ∈ {nil, 1, 3, 7} (`openproject/app/contracts/user_preferences/params_contract.rb:32-33,56-67`). Generated notifications use reasons `date_alert_start_date` (10) and `date_alert_due_date` (11) (`openproject/app/models/notification.rb:31-48,66`). Digest timing from `user_preferences.settings.daily_reminders` {enabled, times} (default enabled at 08:00 UTC), `workdays`, `pause_reminders`, `time_zone` (`openproject/app/models/user_preference.rb:172-234`).
+
+### Pull-planning primitives
+- TaskJuggler task scenario attribute `forward` (ASAP when true, ALAP when false); ALAP tasks need an end or successor and are placed backward from it (`taskjuggler/lib/taskjuggler/TaskScenario.rb:346-347,374-399`).
+- ERPNext `Project Template` → `Project Template Task` rows referencing template `Task`s with `start` (day offset), `duration`, `depends_on`, `parent_task` (`erpnext/erpnext/projects/doctype/project_template*`, `task.json`).
+- Odoo `project.milestone` (`deadline`, `is_reached`, `task_ids`) as pull targets (`odoo/addons/project/models/project_milestone.py:21-35`).
 
 OpenProject relations: `relates`, `precedes`/`follows`, `blocks`/`blocked`, `duplicates`/`duplicated`, `includes`/`partof`, `requires`/`required`, `parent`/`child` (`openproject/app/models/relation.rb:34-49`).
 
@@ -56,6 +67,13 @@ OpenProject relations: `relates`, `precedes`/`follows`, `blocks`/`blocked`, `dup
 4. Ideal line: max = first value; δ = max/(days − 1); ideal[i] = max − δ·i (`:97-107`).
 The journal time-line gives the as-of-date state of each item, the primitive needed for PPC (inferred).
 
+### Backward planning and conversion (D16.07)
+- TaskJuggler validation for direction: a task with a start, an end and dependencies in its scheduling direction is over-specified (error); ALAP tasks with bookings are rejected (`alap_booking`); tasks with on-start dependencies must be ASAP (`onstart_wrong_direction`) (`taskjuggler/lib/taskjuggler/TaskScenario.rb:374-399`). Loop detection follows the scheduling direction: moving forward it traverses ASAP tasks start→end but not ALAP ones (`:625-728`; ALAP reverse traversal inferred).
+- ERPNext `copy_from_template`: only when the project has a template and no tasks; project start defaults to today; for each template task create an Open task with `exp_start_date = project start + start` days and `exp_end_date = start + duration` days, each pushed forward past holidays of the project (or company) holiday list; then re-map `depends_on` and `parent_task` from template ids to the new task ids (`erpnext/erpnext/projects/doctype/project/project.py:114-237`). This is the closest "convert planned cards into activities" routine (inferred analogue).
+
+### Task date alerts (D16.09)
+Alert rule = per user (project override else global, via `applicable(project)`; D12) N days before start/due date, and every N days while overdue; delivery in-app plus the daily digest of unread, unmailed notifications (`openproject/app/models/notifications/scopes/unsent_reminders_before.rb`). The alert job is in `app/workers` (not cloned). ERPNext complements with the daily `set_tasks_as_overdue` status flip (`erpnext/erpnext/projects/doctype/task/task.py:532-543`), which emits no message itself.
+
 ## State machines and workflows
 - ERPNext task: Open → Working → Pending Review → Completed; Overdue set by daily job and cleared on validation; Cancelled; Template fixed for template tasks (`task.py:183-190`). Completion guarded by dependencies.
 - Odoo task: 01_in_progress ↔ 02_changes_requested ↔ 03_approved → 1_done | 1_canceled; 04_waiting_normal entered/exited automatically from blocker states.
@@ -75,3 +93,6 @@ The journal time-line gives the as-of-date state of each item, the primitive nee
 - Commitments: (task, week, committer, committed date, locked flag) captured at the weekly meeting; immutable after lock.
 - PPC per week = completed commitments / total commitments, sliced by company and project, with trend series (as-of-week evaluation using journals).
 - Variance reasons: reason-code list, mandatory reason on missed commitment at week close, Pareto (count by reason, sorted, cumulative %).
+- Pull planning: board session per milestone/phase with cards (trade, duration, handoff deliverable) and card-to-card dependencies; backward pass from the milestone date (ALAP latest finish = successor latest start − lag) to get the latest dates; conversion of cards into schedule activities and relationships (D03/D04), keeping a card → activity link.
+- Takt: zone hierarchy (location breakdown), takt time (period length), trains of trades (wagons) with ordered work packages; sequencing places wagon k in zone z in takt slot z + k − 1 (offset by buffers); output = zone × time matrix and generated tasks; none in OSS.
+- Task notifications: trigger on proposed due date change (request/accept), due-soon and overdue, with per-user frequency immediate/daily/weekly (OpenProject lacks weekly and proposed-date events).
