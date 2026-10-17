@@ -91,7 +91,7 @@ Status key: **covered** = OSS code implements the core logic; **partial** = OSS 
 | A07.01 | Measurement of executed quantities (foi de atașament, măsurători) per item, confirmed by diriginte de șantier | AGC, PH | 200–300 situații/yr *(est.: 15–25 contracts × 12)*, 50–500 lines each | D28.02; D39.04 | partial | `libreplan/libreplan-business/src/main/resources/org/libreplan/business/workreports/entities/WorkReports.hbm.xml` | |
 | A07.02 | Situație de lucrări: quantity × offer unit price, period and cumulative, per obiect | AGC, PH | As above | D21.01, D21.02; D39.04 | spec-only | 03 core gap #1 + `erpnext/erpnext/controllers/status_updater.py` | Must cap cumulative quantity at contract quantity unless NCS exists |
 | A07.03 | Centralizator, deductions (advance recovery, GBE retention), diriginte certification, beneficiary approval | AGC | As above | D21.05, D23.04; D38.02, D39.05 | spec-only | 03 core gaps #1, #2 | |
-| A07.04 | Invoice to the authority via e-Factura after acceptance of the situație | AGC, PH | 200–300/yr | D21.03; D49.01 | partial | `odoo/addons/account_edi_ubl_cii/models/account_edi_ubl_cen_en16931.py` | B2G e-Factura mandatory (Legea 139/2022); RO_CIUS absent from clone |
+| A07.04 | Invoice to the authority via e-Factura after acceptance of the situație | AGC, PH | 200–300/yr | D21.03; D49.01 | done (existing e-Factura project) | `odoo/addons/account_edi_ubl_cii/models/account_edi_ubl_cen_en16931.py` | B2G e-Factura mandatory (Legea 139/2022); RO_CIUS absent from clone |
 | A07.05 | Collection, late-payment interest | AGC | 200–300/yr | D21.04 | covered | `erpnext/erpnext/accounts/doctype/payment_entry`, `erpnext/erpnext/accounts/doctype/dunning` | Legea 72/2013 rate rules not configured |
 | A07.06 | Hidden works (PV lucrări ascunse) gating billing of covered items | AGC | 20–100 PVs per contract *(est.)* | D43.03 | new gap | `libreplan/libreplan-business/src/main/resources/org/libreplan/business/qualityforms/entities/QualityForms.hbm.xml` | |
 | A07.07 | Final account (situație finală) and value reconciliation at reception | AGC | 5–10 closeouts/yr *(est.)* | D39.06 | new gap | — | Input to OUG 64 art. 11(6) final value addendum |
@@ -132,7 +132,7 @@ Status key: **covered** = OSS code implements the core logic; **partial** = OSS 
 | A10.04 | Material conformity at receipt: DoP, CE marking, certificat de conformitate, agrément tehnic | AGC, PH | Per product batch | D44.05 | new gap | `erpnext/erpnext/stock/doctype/quality_inspection/quality_inspection.py` | Reg. (UE) 305/2011; Legea 10/1995 (only certified products) |
 | A10.05 | Site stores, bonuri de consum per contract, stock counts | AGC | 15–25 site stores | D31.07 | covered | `erpnext/erpnext/stock/doctype/stock_entry`, `erpnext/erpnext/stock/doctype/stock_reconciliation` | |
 | A10.06 | Materials share per situație (Vm) for adjustment | AGC | Every situație | D40.03 | new gap | — | OUG 64/2022 art. 17(9) |
-| A10.07 | Inbound e-Factura (SPV download) and 3-way match | ALL | 10,000–30,000 invoices/yr across cluster *(est.)* | D21.03; D49.02 | partial | `odoo/addons/account_edi_ubl_cii/models/account_edi_ubl.py` | |
+| A10.07 | Inbound e-Factura (SPV download) and 3-way match | ALL | 10,000–30,000 invoices/yr across cluster *(est.)* | D21.03; D49.02 | done (existing e-Factura project) | `odoo/addons/account_edi_ubl_cii/models/account_edi_ubl.py` | |
 
 ### A11 Site operations (daily reports, labour, plant)
 
@@ -243,7 +243,7 @@ Status key: **covered** = OSS code implements the core logic; **partial** = OSS 
 | Activity id | Activity | Entity | Volume at their scale | Our coverage | Status | Best source (repo path) | Notes |
 |---|---|---|---|---|---|---|---|
 | A19.01 | General ledger per Romanian chart of accounts per entity | ALL | 6 entities | D49.06 | partial | `odoo/addons/account/models/account_move.py` | OMFP 1802/2014; no l10n_ro in clone |
-| A19.02 | e-Factura issue and receipt (RO_CIUS UBL), SPV status polling | ALL | 20,000–50,000 invoices/yr *(est.)* | D35.04; D49.01, D49.02 | partial | `odoo/addons/account_edi_ubl_cii/models/account_edi_ubl_cen_en16931.py` | OUG 120/2021; Legea 296/2023 |
+| A19.02 | e-Factura issue and receipt (RO_CIUS UBL), SPV status polling | ALL | 20,000–50,000 invoices/yr *(est.)* | D35.04; D49.01, D49.02 | done (existing e-Factura project) | `odoo/addons/account_edi_ubl_cii/models/account_edi_ubl_cen_en16931.py` | OUG 120/2021; Legea 296/2023 |
 | A19.03 | SAF-T D406 (monthly/quarterly; assets annual; stocks on request) | ALL | 6 entities | D49.05 | new gap | — | OPANAF 1783/2021 |
 | A19.04 | e-Transport UIT for high-risk goods | EUF, TNI, TNSA, DPS | 60,000–120,000/yr *(est.)* | D49.03 | new gap | — | OUG 41/2022; OPANAF 802/2022 |
 | A19.05 | VAT: D300, D394, reverse charge on construction | ALL | Monthly | D49.04 | partial | `odoo/addons/account/models/account_tax.py` | Cod fiscal art. 331(2)(i) |
@@ -432,8 +432,8 @@ Status key: **covered** = OSS code implements the core logic; **partial** = OSS 
 
 ### D49 Romanian Fiscal Compliance
 
-- **D49.01 e-Factura outbound**: *Logic:* generate RO_CIUS UBL 2.1; upload to SPV within the statutory term; poll status; store signed XML and index. *Source:* OUG 120/2021; Legea 296/2023; Legea 139/2022 (B2G).
-- **D49.02 e-Factura inbound**: *Logic:* download from SPV; parse; match to PO/receipt.
+- **D49.01 e-Factura outbound** *(already done in an existing project; not rebuilt)*: *Logic:* generate RO_CIUS UBL 2.1; upload to SPV within the statutory term; poll status; store signed XML and index. *Source:* OUG 120/2021; Legea 296/2023; Legea 139/2022 (B2G).
+- **D49.02 e-Factura inbound** *(already done in an existing project; not rebuilt)*: *Logic:* download from SPV; parse; match to PO/receipt.
 - **D49.03 e-Transport**: *Logic:* declare UIT for high-fiscal-risk goods (NC 2505, 2517) before transport; validity window; corrections. *Source:* OUG 41/2022; OPANAF 802/2022.
 - **D49.04 VAT engine**: *Logic:* reverse charge on construction services (art. 331(2)(i)); D300, D394 generation. *Source:* Legea 227/2015 (Cod fiscal).
 - **D49.05 SAF-T D406**: *Logic:* XML from GL, partners, invoices, payments; assets annually; stock on request. *Source:* OPANAF 1783/2021.

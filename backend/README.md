@@ -37,5 +37,6 @@ Requires a JVM (Java 17+) for MPXJ. Database tests skip when PostgreSQL is unrea
 ## Next
 
 - P0: permission evaluation, journal writer, workflow engine, numbering service.
-- P1: addenda limits (art. 221, OUG 64/2022 art. 8–9), NCS pricing, advance recovery, index store ingestion, invoice and e-Factura payload.
+- P1: addenda limits (art. 221, OUG 64/2022 art. 8–9), NCS pricing, advance recovery, index store ingestion.
+- e-Factura: already done in an existing project; integrated as an external adapter, not rebuilt.
 - P2: baselines, resource assignments, persisted import of XER into the schedule tables.
