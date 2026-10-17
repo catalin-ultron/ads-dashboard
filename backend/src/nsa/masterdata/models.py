@@ -42,6 +42,8 @@ class IndexSeries(Keyed, Base):
     code: Mapped[str] = mapped_column(String(32), unique=True)
     name: Mapped[str] = mapped_column(String(255))
     publisher: Mapped[str] = mapped_column(String(32))
+    base_year: Mapped[int | None]
+    source_ref: Mapped[str | None] = mapped_column(String(64))  # e.g. "CNS107D:23295"
 
 
 class IndexValue(Keyed, Base):
@@ -54,7 +56,7 @@ class IndexValue(Keyed, Base):
 
     __table_args__ = (
         UniqueConstraint("series_id", "period"),
-        CheckConstraint("status in ('provisional','final')", name="status"),
+        CheckConstraint("status in ('provisional','revised','final')", name="status"),
     )
 
 

@@ -1,8 +1,8 @@
-"""initial platform contracts billing schedule
+"""initial schema
 
-Revision ID: adb1f7c9c998
+Revision ID: 3080f3e5d0d5
 Revises: 
-Create Date: 2026-10-17 00:26:24.584962
+Create Date: 2026-10-17 01:16:33.036239
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'adb1f7c9c998'
+revision: str = '3080f3e5d0d5'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -82,6 +82,8 @@ def upgrade() -> None:
     sa.Column('code', sa.String(length=32), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('publisher', sa.String(length=32), nullable=False),
+    sa.Column('base_year', sa.Integer(), nullable=True),
+    sa.Column('source_ref', sa.String(length=64), nullable=True),
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_index_series')),
     sa.UniqueConstraint('code', name=op.f('uq_index_series_code'))
@@ -130,6 +132,9 @@ def upgrade() -> None:
     sa.Column('start_order_on', sa.Date(), nullable=True),
     sa.Column('duration_months', sa.Integer(), nullable=True),
     sa.Column('price_excl_vat', sa.Numeric(precision=18, scale=2), nullable=False),
+    sa.Column('initial_price_excl_vat', sa.Numeric(precision=18, scale=2), nullable=True),
+    sa.Column('procedure_type', sa.String(length=16), nullable=False),
+    sa.Column('works', sa.Boolean(), nullable=False),
     sa.Column('currency', sa.String(length=3), nullable=False),
     sa.Column('advance_share', sa.Numeric(precision=12, scale=6), nullable=False),
     sa.Column('materials_weight', sa.Numeric(precision=12, scale=6), nullable=True),
@@ -142,6 +147,7 @@ def upgrade() -> None:
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('company_id', sa.BigInteger(), nullable=False),
     sa.CheckConstraint("funding_source in ('eu', 'pnrr', 'national', 'local', 'private')", name=op.f('ck_contract_funding_source')),
+    sa.CheckConstraint("procedure_type in ('open','restricted','negotiated','simplified','direct','framework')", name=op.f('ck_contract_procedure_type')),
     sa.CheckConstraint("status in ('draft','signed','in_execution','completed','final_reception','closed','terminated')", name=op.f('ck_contract_status')),
     sa.CheckConstraint('price_excl_vat >= 0', name=op.f('ck_contract_price')),
     sa.ForeignKeyConstraint(['authority_id'], ['partner.id'], name=op.f('fk_contract_authority_id_partner')),
@@ -156,7 +162,7 @@ def upgrade() -> None:
     sa.Column('value', sa.Numeric(precision=12, scale=6), nullable=False),
     sa.Column('status', sa.String(length=12), nullable=False),
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
-    sa.CheckConstraint("status in ('provisional','final')", name=op.f('ck_index_value_status')),
+    sa.CheckConstraint("status in ('provisional','revised','final')", name=op.f('ck_index_value_status')),
     sa.ForeignKeyConstraint(['series_id'], ['index_series.id'], name=op.f('fk_index_value_series_id_index_series')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_index_value')),
     sa.UniqueConstraint('series_id', 'period', name=op.f('uq_index_value_series_id_period'))
@@ -174,6 +180,20 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_journal')),
     sa.UniqueConstraint('table_name', 'row_id', 'version', name=op.f('uq_journal_table_name_row_id_version'))
     )
+    op.create_table('workflow_log',
+    sa.Column('doc_type', sa.String(length=64), nullable=False),
+    sa.Column('doc_id', sa.BigInteger(), nullable=False),
+    sa.Column('action', sa.String(length=64), nullable=False),
+    sa.Column('from_state', sa.String(length=32), nullable=False),
+    sa.Column('to_state', sa.String(length=32), nullable=False),
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
+    sa.Column('at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('comment', sa.Text(), nullable=True),
+    sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['app_user.id'], name=op.f('fk_workflow_log_user_id_app_user')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_workflow_log'))
+    )
+    op.create_index('ix_workflow_log_doc', 'workflow_log', ['doc_type', 'doc_id'], unique=False)
     op.create_table('addendum',
     sa.Column('contract_id', sa.BigInteger(), nullable=False),
     sa.Column('number', sa.String(length=32), nullable=False),
@@ -182,12 +202,15 @@ def upgrade() -> None:
     sa.Column('value_delta', sa.Numeric(precision=18, scale=2), nullable=False),
     sa.Column('duration_delta_days', sa.Integer(), nullable=False),
     sa.Column('legal_basis', sa.String(length=128), nullable=True),
+    sa.Column('status', sa.String(length=16), nullable=False),
+    sa.Column('substantiality', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('lock_version', sa.Integer(), server_default='0', nullable=False),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
-    sa.CheckConstraint("kind in ('price_adjustment','extra_works','unforeseen','de_minimis','duration','subcontractor','other')", name=op.f('ck_addendum_kind')),
+    sa.CheckConstraint("kind in ('price_adjustment','extra_works','unforeseen','de_minimis','duration','subcontractor','review_clause','contractor_replacement','non_substantial')", name=op.f('ck_addendum_kind')),
+    sa.CheckConstraint("status in ('draft','approved','signed','cancelled')", name=op.f('ck_addendum_status')),
     sa.ForeignKeyConstraint(['contract_id'], ['contract.id'], name=op.f('fk_addendum_contract_id_contract')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_addendum')),
     sa.UniqueConstraint('contract_id', 'number', name=op.f('uq_addendum_contract_id_number'))
@@ -340,6 +363,10 @@ def upgrade() -> None:
     sa.Column('icc_current', sa.Numeric(precision=12, scale=6), nullable=False),
     sa.Column('icc_reference', sa.Numeric(precision=12, scale=6), nullable=False),
     sa.Column('indices_final', sa.Boolean(), nullable=False),
+    sa.Column('materials_series', sa.String(length=32), nullable=True),
+    sa.Column('total_series', sa.String(length=32), nullable=True),
+    sa.Column('current_period', sa.Date(), nullable=True),
+    sa.Column('reference_period', sa.Date(), nullable=True),
     sa.Column('adjusted_value', sa.Numeric(precision=18, scale=2), nullable=False),
     sa.Column('adjustment', sa.Numeric(precision=18, scale=2), nullable=False),
     sa.Column('id', sa.BigInteger(), autoincrement=True, nullable=False),
@@ -498,6 +525,8 @@ def downgrade() -> None:
     op.drop_table('boq_item')
     op.drop_index(op.f('ix_addendum_contract_id'), table_name='addendum')
     op.drop_table('addendum')
+    op.drop_index('ix_workflow_log_doc', table_name='workflow_log')
+    op.drop_table('workflow_log')
     op.drop_table('journal')
     op.drop_table('index_value')
     op.drop_index(op.f('ix_contract_company_id'), table_name='contract')

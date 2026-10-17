@@ -55,7 +55,7 @@ def build_situatie(session: Session, contract_id: int, period: date, number: str
                    measured: list[MeasuredInput], *, advance_recovery: Decimal = Decimal("0"),
                    penalties: Decimal = Decimal("0"),
                    adjustment_indices: priceadjust.AdjustmentIndices | None = None,
-                   indices_final: bool = False) -> Situatie:
+                   indices_final: bool = False, adjustment_meta: dict | None = None) -> Situatie:
     contract = session.get(Contract, contract_id)
     if contract is None:
         raise BillingError(f"Contract {contract_id} not found")
@@ -89,6 +89,9 @@ def build_situatie(session: Session, contract_id: int, period: date, number: str
             icc_materials_reference=adjustment_indices.icc_materials_reference,
             icc_current=adjustment_indices.icc_current, icc_reference=adjustment_indices.icc_reference,
             indices_final=indices_final, adjusted_value=res.adjusted_value, adjustment=res.adjustment)
+        if adjustment_meta:
+            for key, value in adjustment_meta.items():
+                setattr(run, key, value)
 
     retention = Decimal("0")
     account = _retention_account(session, contract)

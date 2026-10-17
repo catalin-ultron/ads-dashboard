@@ -70,6 +70,10 @@ class PriceAdjustmentRun(Keyed, Audited, Base):
     icc_current: Mapped[Decimal] = mapped_column(Rate)
     icc_reference: Mapped[Decimal] = mapped_column(Rate)
     indices_final: Mapped[bool] = mapped_column(Boolean, default=False)
+    materials_series: Mapped[str | None] = mapped_column(String(32))
+    total_series: Mapped[str | None] = mapped_column(String(32))
+    current_period: Mapped[date | None] = mapped_column(Date)
+    reference_period: Mapped[date | None] = mapped_column(Date)
     adjusted_value: Mapped[Decimal]
     adjustment: Mapped[Decimal]
 
