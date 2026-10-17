@@ -7,6 +7,7 @@ from decimal import Decimal
 
 from sqlalchemy import (BigInteger, Boolean, CheckConstraint, Date, ForeignKey, String, Text,
                         UniqueConstraint)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from nsa.platform.core.db import Audited, Base, CompanyScoped, Keyed, Quantity, Rate
@@ -29,6 +30,9 @@ class Contract(Keyed, Audited, CompanyScoped, Base):
     start_order_on: Mapped[date | None] = mapped_column(Date)
     duration_months: Mapped[int | None]
     price_excl_vat: Mapped[Decimal]
+    initial_price_excl_vat: Mapped[Decimal | None]  # indexed initial value per art. 221(10)
+    procedure_type: Mapped[str] = mapped_column(String(16), default="open")
+    works: Mapped[bool] = mapped_column(Boolean, default=True)
     currency: Mapped[str] = mapped_column(String(3), default="RON")
     advance_share: Mapped[Decimal] = mapped_column(Rate, default=Decimal("0"))
     materials_weight: Mapped[Decimal | None] = mapped_column(Rate)  # %cpm for OUG 64/2022
@@ -44,6 +48,8 @@ class Contract(Keyed, Audited, CompanyScoped, Base):
         CheckConstraint("status in ('draft','signed','in_execution','completed','final_reception','closed',"
                         "'terminated')", name="status"),
         CheckConstraint("price_excl_vat >= 0", name="price"),
+        CheckConstraint("procedure_type in ('open','restricted','negotiated','simplified','direct','framework')",
+                        name="procedure_type"),
     )
 
 
@@ -101,12 +107,14 @@ class Addendum(Keyed, Audited, Base):
     duration_delta_days: Mapped[int] = mapped_column(default=0)
     legal_basis: Mapped[str | None] = mapped_column(String(128))
     status: Mapped[str] = mapped_column(String(16), default="draft")
+    substantiality: Mapped[dict | None] = mapped_column(JSONB)  # art. 221(7) assessment for (1)(e)
 
     __table_args__ = (
         UniqueConstraint("contract_id", "number"),
         CheckConstraint("status in ('draft','approved','signed','cancelled')", name="status"),
         CheckConstraint("kind in ('price_adjustment','extra_works','unforeseen','de_minimis','duration',"
-                        "'subcontractor','other')", name="kind"),
+                        "'subcontractor','review_clause','contractor_replacement','non_substantial')",
+                        name="kind"),
     )
 
 

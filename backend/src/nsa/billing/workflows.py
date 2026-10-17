@@ -9,11 +9,11 @@ from nsa.contracts.models import Contract
 from nsa.platform.workflow.engine import Transition, Workflow, register
 
 
-def _has_certified_value(doc: Situatie) -> str | None:
+def _has_certified_value(session, doc: Situatie) -> str | None:
     return None if doc.certified and doc.certified > 0 else "no certified value"
 
 
-def _all_lines_resolved(doc: Situatie) -> str | None:
+def _all_lines_resolved(session, doc: Situatie) -> str | None:
     open_issues = [ln for ln in doc.lines if not ln.certified]
     return f"{len(open_issues)} line(s) with unresolved issues" if open_issues else None
 

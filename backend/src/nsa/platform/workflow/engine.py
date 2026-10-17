@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from nsa.platform.identity.permissions import Grants
 from nsa.platform.workflow.models import WorkflowLog
 
-Condition = Callable[[object], str | None]  # returns a reason when the transition is blocked
+Condition = Callable[[Session, object], str | None]  # returns a reason when the transition is blocked
 Effect = Callable[[Session, object, int], None]
 
 
@@ -93,7 +93,7 @@ def _blocked(session: Session, wf: Workflow, t: Transition, doc, user_id: int, g
     if user_id in _actors(session, wf.doc_type, doc.id, t.not_by_actor_of):
         return f"same user performed {', '.join(t.not_by_actor_of)}"
     for cond in t.conditions:
-        reason = cond(doc)
+        reason = cond(session, doc)
         if reason:
             return reason
     return None
