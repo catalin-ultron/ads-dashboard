@@ -133,8 +133,8 @@ def _build_calendar(j, file, cal: Calendar):
     return jc
 
 
-def schedule(inp: ScheduleInput) -> ScheduleResult:
-    """Run a P6-style CPM pass and return early/late dates, float and criticality per activity."""
+def build_project_file(inp: ScheduleInput):
+    """Translate a ScheduleInput into an MPXJ ProjectFile; returns (file, tasks by activity code)."""
     j = _java()
     file = j.ProjectFile()
     props = file.getProjectProperties()
@@ -155,6 +155,7 @@ def schedule(inp: ScheduleInput) -> ScheduleResult:
             raise ScheduleError(f"Duplicate activity code {a.code}")
         t = file.addTask()
         t.setActivityID(a.code)
+        t.setText(1, a.code)  # keeps the code in formats without an activity id (MSPDI)
         t.setName(a.name)
         t.setActivityType(getattr(j.JActivityType, _ACTIVITY[a.activity_type]))
         t.setDuration(j.Duration.getInstance(float(a.duration_hours), j.TimeUnit.HOURS))
@@ -183,7 +184,14 @@ def schedule(inp: ScheduleInput) -> ScheduleResult:
                    .type(getattr(j.RelationType, _LINK[r.link]))
                    .lag(j.Duration.getInstance(float(r.lag_hours), j.TimeUnit.HOURS)))
         tasks[r.successor].addPredecessor(builder)
+    return file, tasks
 
+
+def schedule(inp: ScheduleInput) -> ScheduleResult:
+    """Run a P6-style CPM pass and return early/late dates, float and criticality per activity."""
+    j = _java()
+    file, tasks = build_project_file(inp)
+    props = file.getProjectProperties()
     try:
         j.PrimaveraScheduler().schedule(file, _ldt(j, inp.project_start))
     except Exception as exc:  # CpmException / CycleException surface as Java exceptions
