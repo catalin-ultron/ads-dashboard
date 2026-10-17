@@ -100,9 +100,11 @@ class Addendum(Keyed, Audited, Base):
     value_delta: Mapped[Decimal] = mapped_column(default=Decimal("0"))
     duration_delta_days: Mapped[int] = mapped_column(default=0)
     legal_basis: Mapped[str | None] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(16), default="draft")
 
     __table_args__ = (
         UniqueConstraint("contract_id", "number"),
+        CheckConstraint("status in ('draft','approved','signed','cancelled')", name="status"),
         CheckConstraint("kind in ('price_adjustment','extra_works','unforeseen','de_minimis','duration',"
                         "'subcontractor','other')", name="kind"),
     )
