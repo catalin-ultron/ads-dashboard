@@ -13,6 +13,7 @@ from nsa.platform.core.db import Audited, Base, Keyed, Quantity, Rate
 
 class Situatie(Keyed, Audited, Base):
     __tablename__ = "situatie"
+    __journaled__ = True
 
     contract_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("contract.id"), index=True)
     number: Mapped[str] = mapped_column(String(32))

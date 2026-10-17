@@ -39,8 +39,12 @@ class Audited:
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(),
                                                  onupdate=func.now())
-    lock_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    lock_version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @declared_attr.directive
+    def __mapper_args__(cls):
+        return {"version_id_col": cls.lock_version}  # optimistic locking: stale updates raise
 
 
 class CompanyScoped:

@@ -54,6 +54,7 @@ class WbsNode(Keyed, Audited, Base):
 
 class Activity(Keyed, Audited, Base):
     __tablename__ = "activity"
+    __journaled__ = True
 
     schedule_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("schedule.id"), index=True)
     wbs_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("wbs_node.id"))

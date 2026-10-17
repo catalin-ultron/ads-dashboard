@@ -16,6 +16,7 @@ FUNDING_SOURCES = ("eu", "pnrr", "national", "local", "private")
 
 class Contract(Keyed, Audited, CompanyScoped, Base):
     __tablename__ = "contract"
+    __journaled__ = True
 
     number: Mapped[str] = mapped_column(String(64))
     title: Mapped[str] = mapped_column(Text)
@@ -70,6 +71,7 @@ class BoqItem(Keyed, Audited, Base):
     """Bill of quantities line priced from the offer devize (D39.02)."""
 
     __tablename__ = "boq_item"
+    __journaled__ = True
 
     contract_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("contract.id"), index=True)
     object_code: Mapped[str | None] = mapped_column(String(32))  # obiect / categorie de lucrări
@@ -89,6 +91,7 @@ class BoqItem(Keyed, Audited, Base):
 
 class Addendum(Keyed, Audited, Base):
     __tablename__ = "addendum"
+    __journaled__ = True
 
     contract_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("contract.id"), index=True)
     number: Mapped[str] = mapped_column(String(32))
@@ -107,6 +110,7 @@ class Addendum(Keyed, Audited, Base):
 
 class Guarantee(Keyed, Audited, Base):
     __tablename__ = "guarantee"
+    __journaled__ = True
 
     contract_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("contract.id"), index=True)
     kind: Mapped[str] = mapped_column(String(16))
