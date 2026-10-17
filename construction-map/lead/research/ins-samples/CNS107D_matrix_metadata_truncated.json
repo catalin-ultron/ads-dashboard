@@ -1,0 +1,182 @@
+{
+ "ancestors": [
+  {
+   "name": "home",
+   "code": "",
+   "childrenUrl": "context",
+   "comment": null,
+   "url": "context"
+  },
+  {
+   "name": "B. STATISTICA ECONOMICA",
+   "code": "2",
+   "childrenUrl": "context",
+   "comment": null,
+   "url": "context"
+  },
+  {
+   "name": "CONSTRUCTII  <a href=\"https://insse.ro/cms/ro/comunicate-de-presa-view?field_categorie_value_i18n%5B%5D=5&field_cuvinte_cheie_value=&created=All&items_per_page=10\" target=\"_blank\">Comunicate de presa</a>\n",
+   "code": "52",
+   "childrenUrl": "context",
+   "comment": null,
+   "url": "context"
+  },
+  {
+   "name": "CONSTRUCTII",
+   "code": "5025",
+   "childrenUrl": "context",
+   "comment": null,
+   "url": "context"
+  }
+ ],
+ "matrixName": "Indici de cost in constructii - an de baza 2021",
+ "periodicitati": [
+  "Lunara"
+ ],
+ "surseDeDate": [
+  {
+   "nume": "Cercetarea statistica privind activitatea de constructii realizata in antrepriza <<6255>>",
+   "tip": "Surse statistice (INS)",
+   "linkNumber": 6255,
+   "codTip": 1
+  }
+ ],
+ "definitie": "Indicii de cost in constructii sunt indici deflatori si masoara evolutia costurilor  din domeniul constructiilor dintr-o perioada fata de alta.",
+ "metodologie": "Indicii de cost in constructii sunt indici de tip Laspeyres si se calculeaza in conformitate cu prevedirile Regulamentului (UE) nr. 2152/2019 al Parlamentului European si al Consiliului,  Regulamentului delegat (UE) nr.1197/2020 al Comisiei cu privire la statisticile pe termen scurt. Indicii de cost in constructii sunt calculati ca medie ponderata a indicilor de pret ai materialelor de constructii, ai utilajelor din constructii, ai cheltuielilor de transport si ai cheltuielilor indirecte precum si a indicelui castigului salarial nominal brut. Ponderile utilizate pentru agregare reprezinta structura cheltuielilor in constructii rezultata pe baza anchetelor statistice specifice realizate cu periodicitate de 5 ani (ultima realizata pentru anul de baza 2021). Indicii de cost in constructii sunt calculati pe total ramura constructii (sectiunea F CAEN Rev.2), pe elemente de structura (lucrari de constructii noi, reparatii capitale si lucrari de intretinere si reparatii curente) si pe tipuri de constructii (cladiri rezidentiale, cladiri nerezidentiale si constructii ingineresti). Indicii de cost in constructii sunt provizorii si se revizuiesc pe baza rectificarilor ce se efectueaza retroactiv de catre intreprinderile din esantion, asupra datelor furnizate anterior de catre acestea.\n<a href=\"https://insse.ro/cms/files/Rapoarte%20de%20calitate/ISTS/Indicii-cost-in-constructii.pdf\" target=\"_blank\"> Raport de metadate si calitate </a>",
+ "ultimaActualizare": "17-09-2026",
+ "observatii": "Datele sunt disponibile incepand cu anul 2005.",
+ "persoaneResponsabile": null,
+ "dimensionsMap": [
+  {
+   "options": [
+    {
+     "label": "Total",
+     "nomItemId": 23295,
+     "offset": 1,
+     "parentId": null
+    },
+    {
+     "label": "Constructii noi",
+     "nomItemId": 23296,
+     "offset": 2,
+     "parentId": null
+    },
+    {
+     "label": "Reparatii capitale",
+     "nomItemId": 23297,
+     "offset": 3,
+     "parentId": null
+    },
+    {
+     "label": "Reparatii curente",
+     "nomItemId": 23298,
+     "offset": 4,
+     "parentId": null
+    },
+    {
+     "label": "Cladiri rezidentiale",
+     "nomItemId": 23299,
+     "offset": 5,
+     "parentId": null
+    },
+    {
+     "label": "Cladiri nerezidentiale",
+     "nomItemId": 23300,
+     "offset": 6,
+     "parentId": null
+    },
+    {
+     "label": "Constructii ingineresti",
+     "nomItemId": 23301,
+     "offset": 7,
+     "parentId": null
+    },
+    {
+     "label": "Cladiri",
+     "nomItemId": 23302,
+     "offset": 8,
+     "parentId": null
+    },
+    {
+     "label": "TOTAL COST MATERIALE",
+     "nomItemId": 23303,
+     "offset": 9,
+     "parentId": null
+    }
+   ],
+   "dimCode": 1,
+   "label": "Tipuri de lucrari si tipuri de constructii"
+  },
+  {
+   "options": [
+    {
+     "label": "Luna ianuarie 2005",
+     "nomItemId": 4539,
+     "offset": 1,
+     "parentId": null
+    },
+    {
+     "label": "Luna februarie 2005",
+     "nomItemId": 4540,
+     "offset": 2,
+     "parentId": null
+    },
+    {
+     "label": "Luna martie 2005",
+     "nomItemId": 4541,
+     "offset": 3,
+     "parentId": null
+    },
+    {
+     "label": "Luna mai 2026",
+     "nomItemId": 4942,
+     "offset": 257,
+     "parentId": null
+    },
+    {
+     "label": "Luna iunie 2026",
+     "nomItemId": 4943,
+     "offset": 258,
+     "parentId": null
+    },
+    {
+     "label": "Luna iulie 2026",
+     "nomItemId": 4944,
+     "offset": 259,
+     "parentId": null
+    }
+   ],
+   "dimCode": 2,
+   "label": "Luni"
+  },
+  {
+   "options": [
+    {
+     "label": "Procente",
+     "nomItemId": 10225,
+     "offset": 1,
+     "parentId": null
+    }
+   ],
+   "dimCode": 3,
+   "label": "UM: Procente"
+  }
+ ],
+ "intrerupere": null,
+ "continuareSerie": null,
+ "details": {
+  "nomJud": 0,
+  "nomLoc": 0,
+  "matMaxDim": 3,
+  "matUMSpec": 0,
+  "matSiruta": 0,
+  "matCaen1": 0,
+  "matCaen2": 0,
+  "matRegJ": 0,
+  "matCharge": 0,
+  "matViews": 0,
+  "matDownloads": 0,
+  "matActive": 1,
+  "matTime": 2
+ }
+}
